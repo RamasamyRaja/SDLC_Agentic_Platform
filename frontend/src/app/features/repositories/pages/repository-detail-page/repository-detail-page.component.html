@@ -1,0 +1,38 @@
+<div class="page-container">
+  @if (facade.selectedRepository(); as r) {
+    <app-page-header [title]="r.name" [description]="r.description || r.url || 'Repository details'">
+      <a actions class="button" routerLink="/app/repositories">Back</a>
+      <a actions class="button" [routerLink]="['/app/repositories', r.id, 'explorer']">Explore code</a>
+      <button actions class="button" type="button" [disabled]="facade.activeAction() !== null" (click)="onboard()">Onboard / analyze</button>
+      <button actions class="button button--primary" type="button" [disabled]="facade.activeAction() !== null" (click)="index()">Index repository</button>
+    </app-page-header>
+    <section class="hero card">
+      <div><span class="eyebrow">{{ r.provider || 'repository' }}</span><h2 class="mono">{{ r.url || 'Local source' }}</h2><p class="muted">{{ r.branch || 'unknown' }}@if (r.branch_source) { <span class="mono" [title]="'Default branch source'">({{ r.branch_source === 'remote_head' ? 'discovered from remote HEAD' : r.branch_source === 'user_specified' ? 'user-specified, verified on remote' : 'fallback — remote HEAD could not be read' }})</span> } · created {{ time(r.created_at) }}</p></div>
+      <div class="badges"><app-status-badge [status]="r.analysis_status || 'not_started'" /><app-status-badge [status]="r.indexing_status || 'not_started'" /></div>
+    </section>
+    <div class="metric-grid">
+      <div class="card"><span class="muted">Files analyzed</span><strong>{{ facade.analysis()?.files_analyzed ?? '—' }}</strong></div>
+      <div class="card"><span class="muted">Files skipped</span><strong>{{ facade.analysis()?.files_skipped ?? '—' }}</strong></div>
+      <div class="card"><span class="muted">Parse errors</span><strong>{{ facade.analysis()?.parse_error_count ?? '—' }}</strong></div>
+      <div class="card"><span class="muted">Commit</span><strong class="mono">{{ facade.analysis()?.commit_sha ? facade.analysis()?.commit_sha?.slice(0, 8) : '—' }}</strong></div>
+    </div>
+    <div class="grid-2">
+      <section class="card"><h2>Analysis</h2><p>{{ facade.analysis()?.summary || 'No analysis summary available.' }}</p><div class="languages">@for (language of facade.analysis()?.detected_languages ?? []; track language) { <span>{{ language }}</span> }</div></section>
+      <section class="card"><h2>Indexing &amp; readiness</h2><app-index-health [status]="facade.indexStatus()" /></section>
+    </div>
+    <section class="card">
+      <h2>Repository files</h2>
+      @if (docsLoading()) { <p class="muted">Loading file tree…</p> }
+      @else {
+        <div class="tree">
+          @for (d of documents(); track d.path) { <div class="tree-row"><span>{{ d.type === 'directory' ? '▾' : '·' }}</span><span class="mono">{{ d.path }}</span><span class="muted">{{ d.language || '' }}</span></div> }
+          @empty { <p class="muted">No repository documents available.</p> }
+        </div>
+      }
+    </section>
+  } @else if (facade.detailLoading()) {
+    <div class="card">Loading repository…</div>
+  } @else {
+    <div class="card">Repository unavailable. <a routerLink="/app/repositories">Return to repositories</a></div>
+  }
+</div>

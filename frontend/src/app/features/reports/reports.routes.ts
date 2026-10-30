@@ -1,0 +1,1 @@
+import {Routes}from '@angular/router';export const reportsRoutes:Routes=[{path:'',loadComponent:()=>import('./reports-page.component').then(m=>m.ReportsPageComponent)},{path:':reportId',loadComponent:()=>import('./report-detail-page.component').then(m=>m.ReportDetailPageComponent)}];

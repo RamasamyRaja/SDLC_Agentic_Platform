@@ -1,0 +1,75 @@
+<div class="page-container">
+  <app-page-header title="Settings" description="Control profile, appearance, agent behavior, and execution preferences." />
+
+  <div class="grid-2">
+    @if (settings(); as s) {
+      <section class="card">
+        <h2>Profile</h2>
+        <label>Display name<input [value]="s.profile.displayName"></label>
+        <label>Email<input [value]="s.profile.email" disabled></label>
+      </section>
+
+      <section class="card">
+        <h2>Access</h2>
+        <p class="role-value">{{ auth.role() || "UNKNOWN" }}</p>
+        <p class="muted">Your role controls repository, task, Agent, tool, and execution permissions.</p>
+      </section>
+
+      <section class="card">
+        <h2>Appearance</h2>
+        <label>Theme
+          <select [value]="s.appearance.theme" (change)="setTheme($event)">
+            <option value="dark">dark</option>
+            <option value="light">light</option>
+            <option value="system">system</option>
+          </select>
+        </label>
+        <p class="muted">RAD is optimized for a dense engineering workspace.</p>
+      </section>
+
+      <section class="card">
+        <h2>Agent</h2>
+        <label class="check"><input type="checkbox" [checked]="s.agent.confirmBeforeRun" (change)="toggle('agent','confirmBeforeRun',$event)"> Confirm before agent runs</label>
+        <label class="check"><input type="checkbox" [checked]="s.agent.showRetrievedContext" (change)="toggle('agent','showRetrievedContext',$event)"> Show retrieved context</label>
+        <label>Max context items<input type="number" [value]="s.agent.maxContextItems"></label>
+      </section>
+
+      <section class="card">
+        <h2>Execution</h2>
+        <label class="check"><input type="checkbox" [checked]="s.execution.showSandboxStatus" (change)="toggle('execution','showSandboxStatus',$event)"> Show sandbox status</label>
+        <label class="check"><input type="checkbox" [checked]="s.execution.autoExpandLogs" (change)="toggle('execution','autoExpandLogs',$event)"> Auto-expand logs</label>
+      </section>
+
+      <section class="card">
+        <h2>Notifications</h2>
+        <label class="check"><input type="checkbox" [checked]="s.notifications.taskCompletion" (change)="toggle('notifications','taskCompletion',$event)"> Task completion</label>
+        <label class="check"><input type="checkbox" [checked]="s.notifications.executionFailures" (change)="toggle('notifications','executionFailures',$event)"> Execution failures</label>
+        <label class="check"><input type="checkbox" [checked]="s.notifications.agentEvents" (change)="toggle('notifications','agentEvents',$event)"> Agent events</label>
+      </section>
+    } @else {
+      <section class="card"><p class="muted">Loading settings…</p></section>
+    }
+  </div>
+
+  @if (auth.hasPermission('user:read')) {
+    <section class="card">
+      <h2>User access</h2>
+      <p class="muted">Manage roles and active status. Backend RBAC remains authoritative.</p>
+      <div class="user-list">
+        @for (u of users(); track u.id) {
+          <div class="user-row">
+            <div><b>{{ u.full_name }}</b><span class="muted">{{ u.email }}</span></div>
+            @if (auth.hasPermission('user:manage')) {
+              <select [value]="u.role" (change)="changeRole(u,$event)"><option value="ADMIN">ADMIN</option><option value="DEVELOPER">DEVELOPER</option><option value="ARCHITECT">ARCHITECT</option><option value="VIEWER">VIEWER</option></select>
+              <button class="button" type="button" [disabled]="u.id === auth.user()?.id" (click)="toggleActive(u)">{{ u.is_active ? 'Deactivate' : 'Activate' }}</button>
+            } @else { <span>{{ u.role }} · {{ u.is_active ? 'Active' : 'Inactive' }}</span> }
+          </div>
+        } @empty { <p class="muted">No users available.</p> }
+      </div>
+    </section>
+  }
+
+  <div class="save">
+    <button class="button button--primary" type="button" (click)="save()">{{ saved() ? 'Saved' : 'Save settings' }}</button>
+  </div>
+</div>

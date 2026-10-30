@@ -1,0 +1,29 @@
+<div class="page-container">
+  @if (report(); as r) {
+    <app-page-header [title]="r.taskTitle" [description]="r.repositoryName">
+      <a actions class="button" routerLink="/app/reports">Back</a>
+    </app-page-header>
+    <div class="grid-2">
+      @for (section of [
+        {n:'Task summary',v:r.taskSummary},
+        {n:'Repository context',v:r.repositoryContext},
+        {n:'Analysis summary',v:r.analysisSummary},
+        {n:'Agent summary',v:r.agentSummary},
+        {n:'Retrieved context',v:r.retrievedContextSummary},
+        {n:'Execution results',v:r.executionResults},
+        {n:'Final outcome',v:r.finalOutcome}
+      ]; track section.n) {
+        <section class="card"><h2>{{ section.n }}</h2><p>{{ section.v }}</p></section>
+      }
+    </div>
+    <section class="card">
+      <h2>Tools used</h2>
+      <div class="chips">
+        @for (t of r.toolsUsed; track t) { <span>{{ t }}</span> }
+        @empty { <span class="muted">None</span> }
+      </div>
+    </section>
+  } @else {
+    <div class="card">Loading report…</div>
+  }
+</div>

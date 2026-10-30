@@ -1,0 +1,64 @@
+<div class="page-container">
+  <app-page-header title="Tasks" description="Requirement-to-deployment lifecycle for every task in the team.">
+    @if (auth.hasPermission('task:create')) {
+      <a actions class="button button--primary" routerLink="/app/tasks/new">+ New task</a>
+    }
+  </app-page-header>
+
+  @if (awaitingReview() > 0 && (auth.hasPermission('plan:approve') || auth.hasPermission('mr:approve'))) {
+    <p class="notice" role="status">{{ awaitingReview() }} task(s) are waiting for an Architect decision.</p>
+  }
+
+  @if (summary(); as s) {
+    <section class="kpis" aria-label="Workflow health (computed from backend data)">
+      <div class="kpi"><b>{{ s.total }}</b><span>Tasks</span></div>
+      <div class="kpi kpi--warn"><b>{{ s.attention['human_action'] ?? 0 }}</b><span>Need human action</span></div>
+      <div class="kpi kpi--err"><b>{{ s.attention['error'] ?? 0 }}</b><span>Errors</span></div>
+      <div class="kpi"><b>{{ s.attention['blocked'] ?? 0 }}</b><span>Blocked</span></div>
+      <div class="kpi"><b>{{ s.attention['running'] ?? 0 }}</b><span>Running</span></div>
+      <div class="kpi"><b>{{ s.validation['PASSED'] ?? 0 }} / {{ s.validation['PARTIAL'] ?? 0 }} / {{ s.validation['FAILED'] ?? 0 }}</b><span>Validation passed / partial / failed</span></div>
+      <div class="kpi"><b>{{ s.completed }}</b><span>Deployed</span></div>
+    </section>
+  } @else if (summaryError()) {
+    <p class="notice" role="status">Workflow summary unavailable; the task list below is still accurate. <button class="button" (click)="loadSummary()">Retry</button></p>
+  }
+
+  <div class="toolbar">
+    <input class="input input--search" type="search" placeholder="Search title, requirement, repository or creator…" aria-label="Search tasks" (input)="setQuery($event)">
+    <select class="input" aria-label="Filter by stage" (change)="setStage($event)">
+      <option value="all">All stages</option>
+      @for (s of stages(); track s) { <option [value]="s">{{ s.replace(/_/g, ' ') }}</option> }
+    </select>
+    <label class="toggle"><input type="checkbox" [checked]="onlyAttention()" (change)="toggleAttention($event)"> Needs attention only</label>
+  </div>
+
+  @if (loading()) {
+    <app-loading-skeleton [rows]="['100%','100%','100%','100%']" label="Loading tasks" />
+  } @else if (error(); as message) {
+    <div class="card"><h2>Tasks unavailable</h2><p class="muted">{{ message }}</p><button class="button" (click)="load(true)">Retry</button></div>
+  } @else if (filtered().length === 0) {
+    <div class="card"><h2>No tasks</h2><p class="muted">@if (tasks().length === 0) { No tasks exist yet. } @else { No task matches the current filters. }</p></div>
+  } @else {
+    <div class="data-panel"><div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th>Task</th><th>Repository</th><th>Created by</th><th>Attention</th><th>Stage</th><th>Plan</th><th>Validation</th><th>MR review</th><th>Deployment</th><th>Updated</th></tr></thead>
+        <tbody>
+          @for (t of filtered(); track t.id) {
+            <tr>
+              <td><a class="table-link" [routerLink]="['/app/tasks', t.id]">{{ t.title || 'Untitled task' }}</a><div class="cell-sub">{{ t.description }}</div></td>
+              <td>{{ t.repository_name || t.repository_id }}</td>
+              <td>{{ t.creator?.full_name || t.creator?.email || '—' }}</td>
+              <td>@if (t.attention?.level; as lvl) { @if (lvl !== 'running') { <app-status-badge [status]="lvl" /> } <div class="cell-sub">{{ t.attention.reason }}</div> } @else { <span class="muted">—</span> }</td>
+              <td><app-status-badge [status]="t.workflow_stage" /></td>
+              <td><app-status-badge [status]="t.plan_status" /></td>
+              <td><app-status-badge [status]="t.validation_verdict" />@if (t.validation_headline && t.validation_verdict !== 'PASSED') { <div class="cell-sub">{{ t.validation_headline }}</div> }</td>
+              <td><app-status-badge [status]="t.mr_review_status" /></td>
+              <td><app-status-badge [status]="t.deployment_status" /></td>
+              <td class="muted">{{ time(t.updated_at) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div></div>
+  }
+</div>

@@ -1,0 +1,1 @@
+import {Routes}from '@angular/router';export const codeExplorerRoutes:Routes=[{path:'',loadComponent:()=>import('./code-explorer-page.component').then(m=>m.CodeExplorerPageComponent)}];

@@ -1,0 +1,15 @@
+<section class="placeholder page-container" aria-labelledby="page-title">
+  <header class="placeholder__header">
+    <p class="placeholder__phase text-mono">Phase 1 — coming soon</p>
+    <h1 id="page-title" class="placeholder__title">{{ pageData().title }}</h1>
+    @if (pageData().description) {
+      <p class="placeholder__description">{{ pageData().description }}</p>
+    }
+  </header>
+
+  <div class="placeholder__body" role="status">
+    <p class="placeholder__message text-secondary">
+      This section is scaffolded and will be implemented in a future phase.
+    </p>
+  </div>
+</section>

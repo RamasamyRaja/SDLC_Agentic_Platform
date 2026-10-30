@@ -1,0 +1,35 @@
+<div class="page-container">
+  @if (execution(); as e) {
+    <app-page-header [title]="e.id" [description]="e.task_title || e.task_id">
+      <a actions class="button" routerLink="/app/executions">Back</a>
+      <a actions class="button" [routerLink]="['/app/tasks', e.task_id]">Task</a>
+    </app-page-header>
+    <div class="facts card">
+      <span>Status <app-status-badge [status]="e.status" /></span>
+      <span>Duration <b class="mono">{{ duration(e.duration_ms) }}</b></span>
+      <span>Exit code <b class="mono">{{ e.exit_code ?? '—' }}</b></span>
+      <span>Sandbox <b>{{ e.sandbox_status || '—' }}</b></span>
+    </div>
+    <section class="card">
+      <h2>Execution steps</h2>
+      <ol class="steps">
+        @for (s of e.steps || []; track s.id) {
+          <li><div><b>{{ s.name }}</b><p class="muted">{{ s.detail || '' }}</p></div><app-status-badge [status]="s.status" /></li>
+        } @empty { <li class="muted">No step telemetry available.</li> }
+      </ol>
+    </section>
+    <div class="grid-2">
+      <section class="card"><h2>stdout</h2><pre>{{ e.stdout || 'No stdout captured.' }}</pre></section>
+      <section class="card"><h2>stderr</h2><pre>{{ e.stderr || 'No stderr captured.' }}</pre></section>
+    </div>
+    <section class="card">
+      <h2>Tools used</h2>
+      <div class="chips">
+        @for (t of e.tools_used || []; track t) { <span>{{ t }}</span> }
+        @empty { <span class="muted">None</span> }
+      </div>
+    </section>
+  } @else {
+    <div class="card">{{ loading() ? 'Loading execution…' : 'Execution not found.' }}</div>
+  }
+</div>

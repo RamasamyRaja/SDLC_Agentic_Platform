@@ -1,0 +1,22 @@
+
+FROM python:3.12-slim
+
+ENV PIP_NO_CACHE_DIR=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/tmp/work/src
+
+WORKDIR /opt/qa
+
+RUN python -m pip install --no-cache-dir \
+    "charset_normalizer>=2,<4" \
+    "idna>=2.5,<4" \
+    "urllib3>=1.26,<3" \
+    "certifi>=2023.5.7" \
+    "PySocks>=1.5.6,!=1.5.7" \
+    "pytest>=2.8.0,<10" \
+    pytest-cov \
+    "pytest-httpbin==2.1.0" \
+    "httpbin~=0.10.0" \
+    trustme \
+    wheel

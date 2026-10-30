@@ -1,0 +1,31 @@
+<div class="page-container">
+  <app-page-header title="New task" description="Describe the requirement. The Architecture Agent drafts a plan that an Architect must approve before any code is written." />
+  @if (!auth.hasPermission('task:create')) {
+    <div class="card"><h2>Not permitted</h2><p class="muted">Your role ({{ auth.role() }}) cannot create tasks. Only Admin and Developer roles can.</p><a class="button" routerLink="/app/tasks">Back to tasks</a></div>
+  } @else {
+    <form class="form card" (submit)="submit($event)">
+      <label>Repository
+        <select name="repository" required (change)="onRepo($event)">
+          <option value="">Select repository</option>
+          @for (r of repos(); track r.id) { <option [value]="r.id">{{ r.name }}</option> }
+        </select>
+      </label>
+      @if (selected(); as r) {
+        <p class="muted">Default branch: <b class="mono">{{ r.branch || 'unknown' }}</b> · Indexing: {{ r.indexing_status || 'not_started' }}</p>
+      }
+      @if (repoHint(); as h) { <p class="warn" role="status">{{ h }}</p> }
+      <label>Title (optional)<input name="title" placeholder="e.g. Add input validation to the login endpoint"></label>
+      <label>Requirement
+        <textarea name="request" rows="6" required minlength="10" placeholder="What should change, and why?"></textarea>
+      </label>
+      <label>Expected outcome (optional)<textarea name="expected_outcome" rows="3" placeholder="How will we know it is done?"></textarea></label>
+      <label>Additional context (optional)<textarea name="context" rows="3" placeholder="Constraints, links, related issues…"></textarea></label>
+      <label>Base branch (optional)<input name="branch" [placeholder]="selected()?.branch || 'repository default branch'"></label>
+      @if (error(); as e) { <p class="error" role="alert">{{ e }}</p> }
+      <div class="actions">
+        <a class="button" routerLink="/app/tasks">Cancel</a>
+        <button class="button button--primary" [disabled]="saving()">{{ saving() ? 'Creating…' : 'Create task' }}</button>
+      </div>
+    </form>
+  }
+</div>

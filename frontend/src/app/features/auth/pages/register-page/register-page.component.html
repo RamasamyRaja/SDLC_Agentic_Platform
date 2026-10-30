@@ -1,0 +1,56 @@
+<div class="register">
+  <div class="register__panel">
+    <header class="register__header">
+      <span class="register__logo text-mono" aria-hidden="true">&gt;_</span>
+      <h1 class="register__title">Create your RAD account</h1>
+      <p class="register__subtitle">Set up an account to access the RAD AI Agent.</p>
+    </header>
+
+    <form class="register__form" (submit)="onSubmit($event)" novalidate>
+      <div class="register__field">
+        <label class="register__label" for="full-name">Full name</label>
+        <input id="full-name" class="register__input" type="text" autocomplete="name" [value]="fullName()" (input)="onInput(fullName, $event)" [disabled]="isLoading()" required />
+      </div>
+
+      <div class="register__field">
+        <label class="register__label" for="register-email">Email</label>
+        <input id="register-email" class="register__input" type="email" autocomplete="email" [value]="email()" (input)="onInput(email, $event)" [disabled]="isLoading()" required />
+      </div>
+
+      <div class="register__field">
+        <label class="register__label" for="register-password">Password</label>
+        <div class="register__password-wrap">
+          <input id="register-password" class="register__input register__input--password" [type]="passwordInputType()" autocomplete="new-password" [value]="password()" (input)="onInput(password, $event)" [disabled]="isLoading()" required />
+          <button type="button" class="register__toggle" (click)="togglePasswordVisibility()" [disabled]="isLoading()">{{ showPassword() ? 'Hide' : 'Show' }}</button>
+        </div>
+        <p class="register__hint text-muted">Use at least 8 characters.</p>
+      </div>
+
+      <div class="register__field">
+        <label class="register__label" for="confirm-password">Confirm password</label>
+        <div class="register__password-wrap">
+          <input id="confirm-password" class="register__input register__input--password" [class.register__input--invalid]="passwordMismatch()" [type]="confirmPasswordInputType()" autocomplete="new-password" [value]="confirmPassword()" (input)="onInput(confirmPassword, $event)" [disabled]="isLoading()" required />
+          <button type="button" class="register__toggle" (click)="toggleConfirmPasswordVisibility()" [disabled]="isLoading()">{{ showConfirmPassword() ? 'Hide' : 'Show' }}</button>
+        </div>
+      </div>
+
+      @if (errorMessage(); as error) {
+        <div class="register__error-banner" role="alert">{{ error }}</div>
+      }
+
+      <button type="submit" class="register__submit" [disabled]="isLoading()">
+        @if (isLoading()) {
+          <span class="register__spinner" aria-hidden="true"></span>
+          <span>Creating account…</span>
+        } @else {
+          <span>Create account</span>
+        }
+      </button>
+
+      <div class="register__login">
+        <span class="text-muted">Already have an account?</span>
+        <a routerLink="/login" class="register__login-link">Sign in</a>
+      </div>
+    </form>
+  </div>
+</div>

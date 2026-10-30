@@ -1,0 +1,22 @@
+<div class="page-container repositories-page">
+  <app-page-header title="Repositories" description="Browse and manage onboarded codebases for agent analysis.">
+    <button actions class="button button--primary" type="button" (click)="openCreateDialog()">+ Add repository</button>
+  </app-page-header>
+  <section class="toolbar" aria-label="Repository filters">
+    <input class="input input--search" type="search" placeholder="Search repositories…" [value]="searchQuery()" (input)="onSearchInput($event)" />
+    <select class="input" [value]="statusFilter()" (change)="onStatusFilterChange($event)"><option value="all">All statuses</option><option value="analyzing">Analyzing</option><option value="completed">Analysis complete</option><option value="indexing">Indexing</option><option value="indexed">Indexed</option><option value="failed">Failed</option><option value="not_started">Not started</option></select>
+    <select class="input" [value]="languageFilter()" (change)="onLanguageFilterChange($event)"><option value="all">All languages</option>@for (language of availableLanguages(); track language) {<option [value]="language">{{ language }}</option>}</select>
+    <select class="input" [value]="sortField()" (change)="onSortFieldChange($event)"><option value="name">Name</option><option value="created_at">Created</option><option value="last_analyzed_at">Last analyzed</option><option value="task_count">Task count</option></select>
+    <button class="button" type="button" (click)="toggleSortDirection()">Sort {{ sortDirection() === 'asc' ? '↑' : '↓' }}</button>
+    @if (hasActiveFilters()) { <button class="button" type="button" (click)="clearFilters()">Clear</button> }
+  </section>
+  @if (facade.listLoading()) { <app-loading-skeleton [rows]="['100%','100%','100%','100%']" label="Loading repositories" /> }
+  @else if (facade.listError(); as error) { <app-error-state title="Unable to load repositories" [message]="error" (retryClicked)="retryLoad()" /> }
+  @else if (!filteredRepositories().length) { <app-empty-state title="No repositories found" message="Add a repository or adjust your filters." /> }
+  @else {
+    <section class="data-panel"><div class="table-scroll"><table class="data-table"><thead><tr><th>Repository</th><th>Provider</th><th>Branch</th><th>Language</th><th>Analysis</th><th>Index</th><th>Tasks</th><th>Last analyzed</th></tr></thead><tbody>
+      @for (repo of filteredRepositories(); track repo.id) { <tr><td><a class="table-link" [routerLink]="['/app/repositories', repo.id]">{{ repo.name }}</a><div class="cell-sub">{{ repo.description }}</div></td><td>{{ repo.provider || '—' }}</td><td class="mono">{{ repo.branch || '—' }}</td><td>{{ repo.language || '—' }}</td><td><app-status-badge [status]="repo.analysis_status || 'not_started'" /></td><td><app-status-badge [status]="repo.indexing_status || 'not_started'" /></td><td>{{ repo.task_count ?? 0 }}</td><td class="muted">{{ formatTime(repo.last_analyzed_at) }}</td></tr> }
+    </tbody></table></div></section>
+  }
+  <app-create-repository-dialog (created)="onRepositoryCreated($event)" />
+</div>

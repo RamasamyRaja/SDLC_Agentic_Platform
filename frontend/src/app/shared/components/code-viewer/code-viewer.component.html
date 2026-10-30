@@ -1,0 +1,13 @@
+<div class="code-viewer">
+  <div class="code-viewer__header">
+    @if (path()) {
+      <span class="code-viewer__path text-mono">{{ path() }}</span>
+    }
+    <span class="code-viewer__lang">{{ language() }}</span>
+    @if (isMock()) {
+      <span class="code-viewer__mock" title="Mock preview data">mock</span>
+    }
+  </div>
+  <pre class="code-viewer__pre text-mono" tabindex="0"><code>@if (lineNumbers()) {@for (line of content().split('\n'); track $index) {<span class="code-viewer__line"><span class="code-viewer__num">{{ $index + 1 }}</span>{{ line }}
+</span>}} @else {<span>{{ content() }}</span>}</code></pre>
+</div>

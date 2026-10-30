@@ -1,0 +1,88 @@
+// Design tokens — developer-oriented dark-neutral palette
+
+:root {
+  // Color — surfaces
+  --color-bg-base: #0d1117;
+  --color-bg-elevated: #161b22;
+  --color-bg-subtle: #1c2128;
+  --color-bg-hover: #21262d;
+  --color-bg-active: #30363d;
+
+  // Color — borders
+  --color-border-default: #30363d;
+  --color-border-muted: #21262d;
+  --color-border-focus: #58a6ff;
+
+  // Color — text
+  --color-text-primary: #e6edf3;
+  --color-text-secondary: #8b949e;
+  --color-text-muted: #6e7681;
+  --color-text-inverse: #0d1117;
+
+  // Color — accent
+  --color-accent: #58a6ff;
+  --color-accent-hover: #79b8ff;
+  --color-accent-subtle: rgba(88, 166, 255, 0.10);
+  --color-accent-border: rgba(88, 166, 255, 0.32);
+
+  // Color — semantic
+  --color-success: #3fb950;
+  --color-warning: #d29922;
+  --color-error: #f85149;
+  --color-info: #58a6ff;
+
+  // Typography
+  --font-family-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-family-mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.8125rem;
+  --font-size-base: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+
+  // Spacing
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  // Layout
+  --sidebar-width: 240px;
+  --sidebar-width-collapsed: 56px;
+  --header-height: 52px;
+  --content-max-width: 1400px;
+
+  // Radius
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  // Shadows
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+
+  // Transitions
+  --transition-fast: 120ms ease;
+  --transition-normal: 200ms ease;
+
+  // Z-index
+  --z-sidebar: 100;
+  --z-header: 110;
+  --z-overlay: 200;
+}

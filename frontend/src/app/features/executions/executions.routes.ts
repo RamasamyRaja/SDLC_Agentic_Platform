@@ -1,0 +1,1 @@
+import {Routes} from '@angular/router';export const executionsRoutes:Routes=[{path:'',loadComponent:()=>import('./executions-page.component').then(m=>m.ExecutionsPageComponent)},{path:':taskId/:executionId',loadComponent:()=>import('./execution-detail-page.component').then(m=>m.ExecutionDetailPageComponent)}];

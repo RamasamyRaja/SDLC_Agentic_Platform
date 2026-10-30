@@ -1,0 +1,12 @@
+<div class="kpi">
+  <div class="kpi__header">
+    @if (icon()) {
+      <span class="kpi__icon text-mono" aria-hidden="true">{{ icon() }}</span>
+    }
+    <span class="kpi__label">{{ label() }}</span>
+  </div>
+  <div class="kpi__value">{{ value() }}</div>
+  @if (delta()) {
+    <div class="kpi__delta text-muted">{{ delta() }}</div>
+  }
+</div>

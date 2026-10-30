@@ -1,0 +1,22 @@
+<header class="header" role="banner">
+  <div class="header__start">
+    <span class="header__context text-mono">agent workspace</span>
+  </div>
+
+  <div class="header__end">
+    @if (authService.username(); as name) {
+      <span class="header__user">{{ name }}</span>
+    }
+    @if (authService.role(); as role) {
+      <span class="header__role" [attr.data-role]="role">{{ role }}</span>
+    }
+    <button
+      type="button"
+      class="header__logout"
+      (click)="logout()"
+      aria-label="Sign out"
+    >
+      Sign out
+    </button>
+  </div>
+</header>

@@ -1,0 +1,1 @@
+import {Routes}from '@angular/router';export const agentWorkspaceRoutes:Routes=[{path:'',loadComponent:()=>import('./agent-workspace-page.component').then(m=>m.AgentWorkspacePageComponent)}];

@@ -1,0 +1,84 @@
+<dialog
+  #dialog
+  class="repo-dialog"
+  aria-labelledby="create-repo-title"
+  (click)="onBackdropClick($event)"
+>
+  <form class="repo-dialog__panel" (submit)="onSubmit($event)">
+    <header class="repo-dialog__header">
+      <h2 id="create-repo-title" class="repo-dialog__title">Add Repository</h2>
+      <button type="button" class="repo-dialog__close" aria-label="Close dialog" (click)="close()">
+        &times;
+      </button>
+    </header>
+
+    <div class="repo-dialog__body">
+      @if (formError()) {
+        <p class="repo-dialog__error" role="alert">{{ formError() }}</p>
+      }
+
+      <div class="repo-dialog__field">
+        <label for="repo-name">Name</label>
+        <input
+          id="repo-name"
+          type="text"
+          [value]="name()"
+          placeholder="my-project"
+          required
+          autocomplete="off"
+          (input)="onNameInput($event)"
+        />
+      </div>
+
+      <div class="repo-dialog__field">
+        <label for="repo-url">Repository URL</label>
+        <input
+          id="repo-url"
+          type="url"
+          [value]="url()"
+          placeholder="https://github.com/org/my-project"
+          required
+          autocomplete="url"
+          (input)="onUrlInput($event)"
+        />
+      </div>
+
+      <div class="repo-dialog__row">
+        <div class="repo-dialog__field">
+          <label for="repo-branch">Branch</label>
+          <input
+            id="repo-branch"
+            type="text"
+            [value]="branch()"
+            placeholder="main"
+            autocomplete="off"
+            (input)="onBranchInput($event)"
+          />
+        </div>
+
+        <div class="repo-dialog__field">
+          <label for="repo-provider">Provider</label>
+          <select id="repo-provider" [value]="provider()" (change)="onProviderChange($event)">
+            <option value="github">GitHub</option>
+            <option value="gitlab">GitLab</option>
+            <option value="bitbucket">Bitbucket</option>
+            <option value="azure">Azure DevOps</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <footer class="repo-dialog__footer">
+      <button type="button" class="repo-dialog__btn repo-dialog__btn--secondary" (click)="close()">
+        Cancel
+      </button>
+      <button
+        type="submit"
+        class="repo-dialog__btn repo-dialog__btn--primary"
+        [disabled]="isSubmitting()"
+      >
+        {{ isSubmitting() ? 'Adding…' : 'Add Repository' }}
+      </button>
+    </footer>
+  </form>
+</dialog>

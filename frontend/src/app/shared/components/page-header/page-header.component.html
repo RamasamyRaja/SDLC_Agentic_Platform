@@ -1,0 +1,14 @@
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="page-header__title">{{ title() }}</h1>
+    @if (description()) {
+      <p class="page-header__desc">{{ description() }}</p>
+    }
+  </div>
+  @if (actionLabel()) {
+    <button type="button" class="page-header__action" (click)="actionClicked.emit()">
+      {{ actionLabel() }}
+    </button>
+  }
+  <ng-content />
+</header>

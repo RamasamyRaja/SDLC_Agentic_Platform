@@ -1,0 +1,35 @@
+<nav class="sidebar" aria-label="Main navigation">
+  <div class="sidebar__brand">
+    <span class="sidebar__logo text-mono" aria-hidden="true">&gt;_</span>
+    <div class="sidebar__brand-text">
+      <span class="sidebar__title">RAD AI Agent</span>
+      <span class="sidebar__subtitle">Software Engineering Agent</span>
+    </div>
+  </div>
+
+  <ul class="sidebar__nav" role="list">
+    @for (item of navItems; track item.route) {
+      <li>
+        <a
+          class="sidebar__link"
+          [routerLink]="item.route"
+          routerLinkActive="sidebar__link--active"
+        >
+          <span class="sidebar__link-label">{{ item.label }}</span>
+          @if (item.description) {
+            <span class="sidebar__link-desc">{{ item.description }}</span>
+          }
+        </a>
+      </li>
+    }
+  </ul>
+
+  <div class="sidebar__footer">
+    @if (authService.username(); as name) {
+      <span class="sidebar__user text-mono">{{ name }}</span>
+    }
+    @if (authService.role(); as role) {
+      <span class="sidebar__role">{{ role }}</span>
+    }
+  </div>
+</nav>

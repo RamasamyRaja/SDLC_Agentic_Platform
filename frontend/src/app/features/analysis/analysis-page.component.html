@@ -1,0 +1,38 @@
+<div class="page-container">
+  <app-page-header title="Repository Analysis" description="Tree-sitter code intelligence, language breakdown, and indexing metrics.">
+    <a actions class="button" [routerLink]="['/app/repositories', repoId()]">Repository</a>
+    <a actions class="button" [routerLink]="['/app/repositories', repoId(), 'explorer']">Code explorer</a>
+  </app-page-header>
+
+  @if (facade.analysis(); as a) {
+    <section class="card status">
+      <div><span class="muted">Analysis status</span><div><app-status-badge [status]="a.status" /></div></div>
+      <div><span class="muted">Last analyzed</span><b>{{ a.last_analyzed_at || '—' }}</b></div>
+    </section>
+    <div class="metrics">
+      <div class="card"><span class="muted">Files</span><strong>{{ a.files_analyzed ?? 0 }}</strong></div>
+      <div class="card"><span class="muted">Files skipped</span><strong>{{ a.files_skipped ?? 0 }}</strong></div>
+      <div class="card"><span class="muted">Parse errors</span><strong>{{ a.parse_error_count ?? 0 }}</strong></div>
+      <div class="card"><span class="muted">Commit</span><strong class="mono">{{ a.commit_sha ? a.commit_sha.slice(0, 8) : '—' }}</strong></div>
+      <div class="card"><span class="muted">Languages</span><strong>{{ a.detected_languages?.length ?? 0 }}</strong></div>
+    </div>
+    <div class="grid-2">
+      <section class="card">
+        <h2>Language distribution</h2>
+        @for (language of a.detected_languages ?? []; track language) {
+          <div class="language"><span>{{ language }}</span><b>detected</b></div>
+        } @empty { <p class="muted">No detected languages available.</p> }
+      </section>
+      <section class="card">
+        <h2>Index health</h2>
+        <app-index-health [status]="facade.indexStatus()" />
+      </section>
+    </div>
+    <section class="card">
+      <h2>Analyzer summary</h2>
+      <p>{{ a.summary || 'No analyzer summary available.' }}</p>
+    </section>
+  } @else {
+    <div class="card">Loading analysis…</div>
+  }
+</div>

@@ -1,0 +1,1 @@
+import {Routes}from '@angular/router';export const analysisRoutes:Routes=[{path:'',loadComponent:()=>import('./analysis-page.component').then(m=>m.AnalysisPageComponent)}];

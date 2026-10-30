@@ -1,0 +1,190 @@
+<div class="page-container">
+  @if (loading()) { <p class="muted">Loading task…</p> }
+  @else if (task(); as t) {
+    <app-page-header [title]="t.title || 'Untitled task'" [description]="t.description">
+      <a actions class="button" routerLink="/app/tasks">Back</a>
+    </app-page-header>
+
+    <section class="card meta">
+      <span>Stage <app-status-badge [status]="t.workflow_stage" /></span>
+      <span>Repository <b>{{ t.repository?.name || t.repository_name }}</b></span>
+      <span>Branch <b class="mono">{{ t.branch || t.repository?.default_branch }}</b>
+        @if (t.repository?.default_branch_source; as src) { <small class="muted">({{ src }})</small> }</span>
+      <span>Indexing <app-status-badge [status]="t.repository?.indexing_status || 'not_started'" /></span>
+      <span>Created by <b>{{ t.creator?.full_name || t.creator?.email || '—' }}</b></span>
+      <span>Your role <b>{{ auth.role() }}</b></span>
+    </section>
+
+    @if (t.expected_outcome || t.context) {
+      <section class="card">
+        @if (t.expected_outcome) { <p><b>Expected outcome:</b> {{ t.expected_outcome }}</p> }
+        @if (t.context) { <p><b>Context:</b> {{ t.context }}</p> }
+      </section>
+    }
+
+    <section class="card" aria-label="Lifecycle">
+      <h2>Lifecycle</h2>
+      <ol class="timeline">
+        @for (s of t.lifecycle; track s.key) {
+          <li class="step step--{{ s.status.toLowerCase() }}">
+            <div class="step__head"><b>{{ s.label }}</b><app-status-badge [status]="s.status" /></div>
+            <div class="muted">Owner: {{ s.owner }}</div>
+            @if (s.summary) { <div>{{ s.summary }}</div> }
+            @if (s.error) { <div class="error">{{ s.error }}</div> }
+            @for (b of s.blockers; track b) { <div class="warn">Blocked: {{ b }}</div> }
+          </li>
+        }
+      </ol>
+    </section>
+
+    <section class="card" aria-label="Actions">
+      <h2>Actions</h2>
+      @if (working()) { <p class="muted" role="status">An agent is working ({{ t.workflow_stage }}). This page refreshes automatically.</p> }
+      @if (actions().length === 0 && !working()) {
+        <p class="muted">No action is available to your role ({{ auth.role() }}) at this stage.@if (!auth.hasPermission('task:create') && !auth.hasPermission('plan:approve')) { You have read-only access. }</p>
+      }
+      @if (needsComment()) {
+        <label>Comment / feedback<textarea rows="3" [value]="comment()" (input)="setComment($event)" placeholder="Optional feedback — required when rejecting or requesting changes"></textarea></label>
+      }
+      @if (needsAck()) {
+        <label class="check"><input type="checkbox" [checked]="ack()" (change)="setAck($event)"> I acknowledge validation did not fully pass (FAILED, PARTIAL or NOT RUN) and want to proceed anyway.</label>
+      }
+      <div class="btns">
+        @for (a of actions(); track a.key) {
+          <button class="button" [class.button--primary]="a.decision === 'APPROVED' || a.key === 'deploy'" [disabled]="busy() || !!blocked(a)" [title]="blocked(a) || ''" (click)="act(a)">{{ a.label }}</button>
+        }
+      </div>
+      @if (notice(); as n) { <p class="notice" role="status">{{ n }}</p> }
+      @if (error(); as e) { <p class="error" role="alert">{{ e }}</p> }
+    </section>
+
+    <nav class="tabs" role="tablist">
+      @for (x of [['plan','Architecture plan'],['implementation','Implementation'],['validation','Validation'],['mr','Merge request'],['deployment','Deployment'],['report','Report'],['history','History']]; track x[0]) {
+        <button role="tab" class="tab" [class.tab--on]="tab() === x[0]" [attr.aria-selected]="tab() === x[0]" (click)="selectTab($any(x[0]))">{{ x[1] }}</button>
+      }
+    </nav>
+
+    @switch (tab()) {
+      @case ('plan') {
+        <section class="card">
+          @if (plan(); as p) {
+            <div class="meta"><span>Version {{ p.version }}</span><app-status-badge [status]="p.status" /><span class="muted">model {{ p.model_name || '—' }}</span><span class="muted mono">commit {{ (p.repository_commit_sha || '').slice(0, 8) || '—' }}</span></div>
+            @if (p.error) { <p class="error">{{ p.error }}</p> }
+            @if (p.plan; as pl) {
+              <h3>Summary</h3><p>{{ pl.summary }}</p>
+              <h3>Current implementation (from repository)</h3><p>{{ pl.current_implementation }}</p>
+              <h3>Findings and evidence</h3>
+              @for (f of pl.findings; track $index) {
+                <div class="finding"><p>{{ f.statement }}</p>
+                  @for (ev of f.evidence; track $index) {
+                    <div class="evidence"><span class="mono">{{ ev.file_path }}</span> <app-status-badge [status]="ev.verified ? 'completed' : 'failed'" /> <small class="muted">{{ ev.verified ? 'quote found in file' : 'quote NOT verified' }}</small><pre>{{ ev.quote }}</pre></div>
+                  }
+                </div>
+              }
+              <h3>Recommended approach</h3><p>{{ pl.recommended_approach }}</p><p class="muted">{{ pl.rationale }}</p>
+              <h3>Files to change</h3>
+              <table class="data-table"><thead><tr><th>File</th><th>Action</th><th>Exists</th><th>Change</th></tr></thead><tbody>
+                @for (f of pl.files_to_change; track f.file_path) { <tr><td class="mono">{{ f.file_path }}</td><td>{{ f.action }}</td><td>{{ f.exists ? 'yes' : 'no' }}</td><td>{{ f.change_description }}</td></tr> }
+              </tbody></table>
+              <h3>Implementation steps</h3><ol>@for (s of pl.implementation_steps; track s.step) { <li>{{ s.description }} <span class="muted mono">{{ s.files.join(', ') }}</span></li> }</ol>
+              <h3>Acceptance criteria</h3><ul>@for (c of pl.acceptance_criteria; track $index) { <li>{{ c }}</li> }</ul>
+              <h3>Test strategy</h3><p>{{ pl.test_strategy.approach }}</p>
+              <h3>Risks</h3><ul>@for (r of pl.risks; track $index) { <li>{{ r }}</li> } @empty { <li class="muted">None listed</li> }</ul>
+              <h3>Uncertainties</h3><ul>@for (r of pl.uncertainties; track $index) { <li>{{ r }}</li> } @empty { <li class="muted">None listed</li> }</ul>
+              <p class="muted">Model-reported confidence: {{ (pl.confidence * 100).toFixed(0) }}% (self-assessed, not verified).</p>
+            }
+            @if (p.evidence; as ev) {
+              <details><summary>Evidence: {{ ev.verification.verified_quotes }}/{{ ev.verification.total_quotes }} quotes verified · {{ ev.files_read.length }} files read</summary>
+                <ul>@for (f of ev.files_read; track f.path) { <li class="mono">{{ f.path }} <small class="muted">{{ f.lines }} lines · sha256 {{ f.sha256.slice(0, 12) }}</small></li> }</ul></details>
+            }
+          } @else { <p class="muted">No plan yet. {{ t.workflow_stage === 'CREATED' ? 'Planning has not started.' : '' }}</p> }
+        </section>
+      }
+      @case ('implementation') {
+        <section class="card">
+          @if (run(); as r) {
+            <div class="meta"><span>Attempt {{ r.attempt }}</span><app-status-badge [status]="r.status" /><span class="mono">{{ r.branch_name }}</span><span class="muted">base {{ r.base_branch }}@{{ (r.base_commit_sha || '').slice(0, 8) }}</span></div>
+            @if (r.error) { <p class="error">{{ r.error }}</p> }
+            @if (r.summary) { <p>{{ r.summary }}</p> }
+            <h3>Changed files (from git)</h3>
+            <ul>@for (f of r.changed_files; track f) { <li class="mono">{{ f }}</li> } @empty { <li class="muted">No files changed.</li> }</ul>
+            @if (r.diff_stat; as d) { <p class="muted">+{{ d.additions }} −{{ d.deletions }} in {{ d.files }} file(s)</p> }
+            <h3>Edits requested by the agent</h3>
+            <table class="data-table"><tbody>@for (e of r.edits; track $index) { <tr><td class="mono">{{ e.file_path }}</td><td>{{ e.kind }}</td><td><app-status-badge [status]="e.status" /></td><td class="muted">{{ e.reason || e.rationale || '' }}</td></tr> }</tbody></table>
+            <h3>Diff</h3><app-diff-viewer [diff]="r.diff" />
+            @if (r.commit_sha) { <p class="muted mono">commit {{ r.commit_sha }} — {{ r.commit_message }}</p> }
+          } @else { <p class="muted">Implementation has not run. It can only start after an Architect approves the plan.</p> }
+        </section>
+      }
+      @case ('validation') {
+        <section class="card">
+          @if (run(); as r) {
+            <div class="meta"><span>Verdict</span><app-status-badge [status]="r.validation_verdict" />
+              @for (c of checkCounts() | keyvalue; track c.key) { <span class="muted">{{ c.key }}: {{ c.value }}</span> }</div>
+            @if (r.validation_summary; as vs) {
+              <div class="notice-box"><b>{{ vs.headline }}</b>
+                @if (vs.legacy) { <p class="muted">Validated before explanations were recorded; this is derived from the stored checks and the stored verdict is unchanged.</p> }
+                <ul>@for (reason of vs.reasons; track $index) { <li>{{ reason }}</li> }</ul>
+                @if (r.validated_at) { <p class="muted">Validated {{ r.validated_at }}</p> }
+              </div>
+            }
+            <table class="data-table"><thead><tr><th>Check</th><th>Required</th><th>Status</th><th>Runner</th><th>Exit</th><th>Command</th></tr></thead><tbody>
+              @for (c of checks(); track c.id) {
+                <tr><td>{{ c.name }}</td><td>{{ c.required === false ? 'advisory' : c.required ? 'required' : '—' }}</td><td><app-status-badge [status]="c.status" /></td><td>{{ c.runner || '—' }}</td><td>{{ c.exit_code ?? '—' }}</td><td class="mono">{{ c.command || '—' }}</td></tr>
+                @if (c.failure_details || c.output) { <tr><td colspan="6"><details><summary>Output</summary><pre>{{ c.failure_details || c.output }}</pre></details></td></tr> }
+              } @empty { <tr><td colspan="6" class="muted">No checks have run.</td></tr> }
+            </tbody></table>
+            <p class="muted">BLOCKED / DEPENDENCY_MISSING / UNVERIFIED / NO_TESTS mean the check could not run; they are never reported as passed.</p>
+          } @else { <p class="muted">No validation yet.</p> }
+        </section>
+      }
+      @case ('mr') {
+        <section class="card">
+          @if (mr(); as m) {
+            <div class="meta"><span>{{ m.title }}</span><app-status-badge [status]="m.review_status" /><span class="mono">{{ m.source_branch }} → {{ m.target_branch }}</span></div>
+            @if (mrInfo(); as i) { <p [class]="i.kind === 'remote' ? 'notice' : 'warn'">{{ i.text }}@if (m.remote_url) { <a [href]="m.remote_url" target="_blank" rel="noopener noreferrer"> Open</a> }</p> }
+            <p class="muted">Pushed: {{ m.pushed ? 'yes' : 'no' }} · Validation at creation: {{ m.validation_verdict }}@if (m.failed_validation_acknowledged) { · <b>submitted with acknowledged failing validation</b> }</p>
+            @if (m.error) { <p class="error">{{ m.error }}</p> }
+            <pre>{{ m.description }}</pre>
+            @if (m.run) { <h3>Diff under review</h3><app-diff-viewer [diff]="m.run.diff" /> }
+          } @else { <p class="muted">No merge request has been created.</p> }
+        </section>
+      }
+      @case ('deployment') {
+        <section class="card">
+          @if (deployment(); as d) {
+            <div class="meta"><app-status-badge [status]="d.status" /><span>Attempt {{ d.attempt }}</span><span class="mono muted">{{ (d.commit_sha || '').slice(0, 8) }}</span></div>
+            <p class="muted">Verification level: <b>{{ d.verification_level || 'not recorded (deployed before evidence tracking)' }}</b> — command completion, target health, deployed version and smoke tests are separate evidence; only FULLY_VERIFIED means all of them passed.</p>
+            @if (d.error) { <p class="error">{{ d.error }}</p> }
+            @if (d.artifact_sha256) { <p class="muted mono">artifact sha256 {{ d.artifact_sha256 }}</p> }
+            <table class="data-table"><tbody>@for (s of d.steps; track $index) { <tr><td>{{ s.name }}</td><td><app-status-badge [status]="s.status" /></td><td class="muted">{{ s.detail }}</td></tr> }</tbody></table>
+            @if (d.log) { <details><summary>Log</summary><pre>{{ d.log }}</pre></details> }
+          } @else { <p class="muted">Deployment is blocked until an Architect approves the merge request.</p> }
+        </section>
+      }
+      @case ('report') {
+        <section class="card">
+          @if (report(); as r) {
+            <p>Implementation completed: <b>{{ r.implementation_completed ? 'yes' : 'no' }}</b> · stage {{ r.workflow_stage }}</p>
+            <h3>Verified (system evidence)</h3>
+            @for (e of entries(r.verified); track e[0]) { <details><summary>{{ e[0] }}</summary><pre>{{ json(e[1]) }}</pre></details> }
+            <h3>Model recommendations (not verified)</h3>
+            @for (e of entries(r.recommendations); track e[0]) { <details><summary>{{ e[0] }}</summary><pre>{{ json(e[1]) }}</pre></details> }
+            <h3>Unverified</h3><pre>{{ json(r.unverified) }}</pre>
+            <h3>Unavailable</h3><ul>@for (u of r.unavailable; track $index) { <li>{{ u }}</li> } @empty { <li class="muted">—</li> }</ul>
+            <h3>Unresolved issues</h3><ul>@for (u of r.unresolved_issues; track $index) { <li>{{ u }}</li> } @empty { <li class="muted">—</li> }</ul>
+          } @else { <p class="muted">Loading report…</p> }
+        </section>
+      }
+      @case ('history') {
+        <section class="card">
+          <table class="data-table"><thead><tr><th>When</th><th>Event</th><th>Transition</th><th>Actor</th><th>Message</th></tr></thead><tbody>
+            @for (e of events(); track e.id) { <tr><td class="muted">{{ time(e.created_at) }}</td><td>{{ e.event_type }}</td><td class="mono">{{ e.from_stage || '∅' }} → {{ e.to_stage || '∅' }}</td><td>{{ e.actor || 'system' }}</td><td>{{ e.message }}</td></tr> }
+          </tbody></table>
+        </section>
+      }
+    }
+  } @else if (error(); as e) {
+    <div class="card"><h2>Task unavailable</h2><p class="error">{{ e }}</p><a class="button" routerLink="/app/tasks">Back to tasks</a></div>
+  }
+</div>

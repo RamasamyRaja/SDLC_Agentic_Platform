@@ -1,0 +1,9 @@
+<div class="empty" role="status">
+  <p class="empty__title">{{ title() }}</p>
+  @if (message()) {
+    <p class="empty__message text-secondary">{{ message() }}</p>
+  }
+  @if (actionLabel()) {
+    <button type="button" class="empty__action" (click)="actionClicked.emit()">{{ actionLabel() }}</button>
+  }
+</div>

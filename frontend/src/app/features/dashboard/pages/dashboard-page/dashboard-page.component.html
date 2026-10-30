@@ -1,0 +1,186 @@
+<div class="page-container dashboard">
+  @if (facade.loading()) {
+    <app-loading-skeleton
+      [rows]="['100%', '40%', '60%', '80%', '50%']"
+      label="Loading dashboard"
+    />
+  } @else if (facade.error(); as error) {
+    <app-error-state
+      title="Unable to load dashboard"
+      [message]="error"
+      (retryClicked)="facade.load()"
+    />
+  } @else if (facade.data(); as data) {
+    <section class="dashboard__kpis" aria-label="Key metrics">
+      <app-kpi-card
+        label="Repositories"
+        [value]="data.kpis.repositories"
+        [delta]="data.kpis.repositoriesDelta"
+        icon="⬡"
+      />
+      <app-kpi-card
+        label="Active Tasks"
+        [value]="data.kpis.activeTasks"
+        [delta]="data.kpis.activeTasksDelta"
+        icon="◆"
+      />
+      <app-kpi-card
+        label="Running Executions"
+        [value]="data.kpis.runningExecutions"
+        icon="▶"
+      />
+      <app-kpi-card
+        label="Successful Runs"
+        [value]="data.kpis.successfulExecutions"
+        icon="✓"
+      />
+      <app-kpi-card
+        label="Failed Runs"
+        [value]="data.kpis.failedExecutions"
+        icon="✕"
+      />
+    </section>
+
+    <div class="dashboard__grid">
+      <section class="dashboard__panel" aria-labelledby="recent-tasks-heading">
+        <app-section-header title="Recent Tasks" />
+        <div class="dashboard__table-wrap">
+          <table class="dashboard__table">
+            <thead>
+              <tr>
+                <th scope="col">Task</th>
+                <th scope="col">Repository</th>
+                <th scope="col">Priority</th>
+                <th scope="col">Status</th>
+                <th scope="col">Updated</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (task of data.recentTasks; track task.id) {
+                <tr>
+                  <td>
+                    <a [routerLink]="['/app/tasks', task.id]" class="dashboard__link">
+                      {{ task.title }}
+                    </a>
+                  </td>
+                  <td class="text-secondary truncate">{{ task.repository }}</td>
+                  <td><app-status-badge [status]="task.priority" /></td>
+                  <td><app-status-badge [status]="task.status" /></td>
+                  <td class="text-muted">{{ formatRelativeTime(task.updatedAt) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="dashboard__panel" aria-labelledby="recent-executions-heading">
+        <app-section-header title="Recent Executions">
+          <a actions routerLink="/app/executions" class="dashboard__view-all">View all</a>
+        </app-section-header>
+        <ul class="dashboard__list">
+          @for (exec of data.recentExecutions; track exec.id) {
+            <li class="dashboard__list-item">
+              <div class="dashboard__list-main">
+                <span class="dashboard__list-title truncate">{{ exec.taskTitle }}</span>
+                <span class="dashboard__list-meta text-muted">
+                  {{ formatDuration(exec.durationMs) }} · {{ formatRelativeTime(exec.timestamp) }}
+                </span>
+              </div>
+              <app-status-badge [status]="exec.status" />
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section class="dashboard__panel" aria-labelledby="repo-health-heading">
+        <app-section-header title="Repository Health" />
+        <ul class="dashboard__list">
+          @for (repo of data.repositoryHealth; track repo.id) {
+            <li class="dashboard__list-item dashboard__list-item--stacked">
+              <a [routerLink]="['/app/repositories', repo.id]" class="dashboard__link dashboard__list-title">
+                {{ repo.name }}
+              </a>
+              <div class="dashboard__badges">
+                <app-status-badge [status]="repo.analysisStatus" />
+                <app-status-badge [status]="repo.indexingStatus" />
+              </div>
+              <span class="dashboard__list-meta text-muted">
+                Last activity {{ formatRelativeTime(repo.lastActivity) }}
+              </span>
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section class="dashboard__panel" aria-labelledby="agent-activity-heading">
+        <app-section-header title="Agent Activity" />
+        <ul class="dashboard__activity">
+          @for (item of data.agentActivity; track item.id) {
+            <li class="dashboard__activity-item">
+              <span class="dashboard__activity-icon text-mono" aria-hidden="true">
+                {{ activityTypeIcon(item.type) }}
+              </span>
+              <div class="dashboard__activity-body">
+                <p class="dashboard__activity-message">{{ item.message }}</p>
+                <span class="dashboard__list-meta text-muted">{{ formatRelativeTime(item.timestamp) }}</span>
+              </div>
+              <app-status-badge [status]="item.status" />
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section class="dashboard__panel dashboard__panel--summary" aria-labelledby="task-summary-heading">
+        <app-section-header title="Task Status Summary" />
+        <div class="dashboard__summary">
+          <div
+            class="dashboard__summary-bar"
+            role="img"
+            [attr.aria-label]="'Task distribution: ' + statusBars().map(s => s.label + ' ' + s.count).join(', ')"
+          >
+            @for (segment of statusBars(); track segment.key) {
+              @if (segment.count > 0) {
+                <span
+                  class="dashboard__summary-segment"
+                  [style.flex-grow]="segment.count"
+                  [style.background]="segment.color"
+                  [attr.title]="segment.label + ': ' + segment.count"
+                ></span>
+              }
+            }
+          </div>
+          <ul class="dashboard__summary-legend">
+            @for (segment of statusBars(); track segment.key) {
+              <li class="dashboard__summary-legend-item">
+                <span class="dashboard__summary-dot" [style.background]="segment.color"></span>
+                <span class="dashboard__summary-label">{{ segment.label }}</span>
+                <span class="dashboard__summary-count text-muted">{{ segment.count }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+      </section>
+
+      <section class="dashboard__panel dashboard__panel--timeline" aria-labelledby="timeline-heading">
+        <app-section-header title="Activity Timeline" />
+        <ol class="dashboard__timeline">
+          @for (event of data.recentActivity; track event.id) {
+            <li class="dashboard__timeline-item">
+              <span class="dashboard__timeline-icon text-mono" aria-hidden="true">
+                {{ categoryIcon(event.category) }}
+              </span>
+              <div class="dashboard__timeline-body">
+                <p class="dashboard__timeline-title">{{ event.title }}</p>
+                <p class="dashboard__timeline-desc text-secondary">{{ event.description }}</p>
+                <time class="dashboard__list-meta text-muted" [attr.datetime]="event.timestamp">
+                  {{ formatRelativeTime(event.timestamp) }}
+                </time>
+              </div>
+            </li>
+          }
+        </ol>
+      </section>
+    </div>
+  }
+</div>

@@ -1,0 +1,87 @@
+<div class="login">
+  <div class="login__panel">
+    <header class="login__header">
+      <span class="login__logo text-mono" aria-hidden="true">&gt;_</span>
+      <h1 class="login__title">RAD AI Agent</h1>
+      <p class="login__subtitle">Software Engineering Agent — sign in to continue</p>
+    </header>
+
+    <form class="login__form" (submit)="onSubmit($event)" novalidate>
+      <div class="login__field">
+        <label class="login__label" for="username">Email</label>
+        <input
+          id="username"
+          class="login__input text-mono"
+          [class.login__input--invalid]="usernameError()"
+          type="text"
+          name="email"
+          autocomplete="email"
+          [value]="username()"
+          (input)="onUsernameInput($event)"
+          (blur)="onUsernameBlur()"
+          [attr.aria-invalid]="usernameError() ? 'true' : null"
+          [attr.aria-describedby]="usernameError() ? 'username-error' : 'username-hint'"
+          [disabled]="isLoading()"
+          required
+        />
+        @if (usernameError(); as userError) {
+          <p id="username-error" class="login__field-error" role="alert">{{ userError }}</p>
+        } @else {
+          <p id="username-hint" class="login__hint text-muted">Use the email address associated with your RAD account.</p>
+        }
+      </div>
+
+      <div class="login__field">
+        <label class="login__label" for="password">Password</label>
+        <div class="login__password-wrap">
+          <input
+            id="password"
+            class="login__input login__input--password text-mono"
+            [type]="passwordInputType()"
+            name="password"
+            autocomplete="current-password"
+            [value]="password()"
+            (input)="onPasswordInput($event)"
+            [disabled]="isLoading()"
+            aria-describedby="password-hint"
+          />
+          <button
+            type="button"
+            class="login__toggle"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+            [attr.aria-pressed]="showPassword()"
+            [disabled]="isLoading()"
+          >
+            @if (showPassword()) {
+              <span aria-hidden="true">Hide</span>
+            } @else {
+              <span aria-hidden="true">Show</span>
+            }
+          </button>
+        </div>
+        <p id="password-hint" class="login__hint text-muted">Your account role controls which RAD capabilities are available.</p>
+      </div>
+
+      @if (errorMessage(); as error) {
+        <div class="login__error-banner" role="alert">
+          <p class="login__error">{{ error }}</p>
+        </div>
+      }
+
+      <button type="submit" class="login__submit" [disabled]="isLoading()" [attr.aria-busy]="isLoading()">
+        @if (isLoading()) {
+          <span class="login__spinner" aria-hidden="true"></span>
+          <span>Signing in…</span>
+        } @else {
+          <span>Sign in</span>
+        }
+      </button>
+
+      <div class="login__register">
+        <span class="text-muted">Don't have a RAD account?</span>
+        <a routerLink="/login/register" class="login__register-link">Create an account</a>
+      </div>
+    </form>
+  </div>
+</div>

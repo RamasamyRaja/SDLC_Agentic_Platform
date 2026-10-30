@@ -1,0 +1,100 @@
+<div class="page-container">
+  @if (task(); as t) {
+    <app-page-header [title]="t.title" description="Agent control room">
+      <a actions class="button" [routerLink]="['/app/tasks', t.id]">Task details</a>
+    </app-page-header>
+
+    <div class="workspace">
+      <aside class="panel context">
+        <header>CONTEXT</header>
+        <div class="section">
+          <span class="label">Repository</span>
+          <b>{{ t.repository_name || t.repository_id }}</b>
+          <span class="label">Branch</span>
+          <b class="mono">{{ t.branch || 'main' }}</b>
+        </div>
+        <div class="section">
+          <span class="label">Relevant files</span>
+          @for (f of t.relevant_files || []; track f) {
+            <button class="file" type="button" (click)="openFile(f)">{{ f }}</button>
+          } @empty {
+            <span class="muted">No relevant files selected.</span>
+          }
+        </div>
+        <div class="section">
+          <span class="label">Retrieved context</span>
+          @for (c of t.retrieved_context || []; track c.path) {
+            <div class="context-item">
+              <b class="mono">{{ c.path }}</b>
+              <p>{{ c.snippet }}</p>
+            </div>
+          } @empty {
+            <span class="muted">No retrieved context.</span>
+          }
+        </div>
+      </aside>
+
+      <main class="panel conversation">
+        <header>AGENT</header>
+        <div class="messages">
+          @for (m of messages(); track $index) {
+            <div class="message">{{ m }}</div>
+          } @empty {
+            <div class="empty">No conversation yet. Give the agent a focused engineering request.</div>
+          }
+        </div>
+        <div class="composer">
+          <input placeholder="Tell the agent what to investigate or change…" [value]="prompt()" (input)="setPrompt($event)" (keyup.enter)="run()">
+          <button class="button button--primary" [disabled]="running() || !auth.hasPermission('agent:run')" type="button" (click)="run()">
+            {{ running() ? 'Running…' : 'Run agent' }}
+          </button>
+        </div>
+      </main>
+
+      <aside class="panel activity">
+        <header>ACTIVITY</header>
+        <div class="section">
+          <span class="label">Execution</span>
+          @if (execution(); as e) {
+            <div class="run">
+              <app-status-badge [status]="e.status" />
+              <span class="mono">{{ e.id }}</span>
+            </div>
+            <pre>{{ e.stdout || 'Waiting for output…' }}</pre>
+          } @else {
+            <p class="muted">No active execution.</p>
+          }
+        </div>
+        <div class="section">
+          <span class="label">Tools</span>
+          @for (tool of tools(); track tool.name) {
+            <button class="tool" type="button" [disabled]="!auth.hasPermission('tool:invoke')" (click)="invoke(tool)">
+              <span class="mono">{{ tool.name }}</span>
+              <small>{{ tool.description }}</small>
+            </button>
+          } @empty {
+            <span class="muted">No tools available.</span>
+          }
+        </div>
+        @if (toolResult(); as r) {
+          <div class="section result">
+            <b>{{ r.tool_name }}</b>
+            <pre>{{ r.output || r.error }}</pre>
+          </div>
+        }
+      </aside>
+    </div>
+
+    @if (file(); as f) {
+      <section class="panel preview">
+        <div class="preview-head">
+          <span class="mono">{{ f.path }}</span>
+          <span class="muted">{{ f.language }}</span>
+        </div>
+        <app-code-viewer [content]="f.content" [language]="f.language" />
+      </section>
+    }
+  } @else {
+    <div class="panel empty">Loading task workspace…</div>
+  }
+</div>
